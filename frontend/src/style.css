@@ -2,14 +2,24 @@
 
 /* CSS Variables */
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+  /* UTB Official Branding */
+  --utb-blue: #0054A4;
+  --utb-yellow: #FFC20E;
+  --utb-green: #00A651;
+  --utb-black: #1A1A1A;
+  
+  /* Theme mapping */
+  --primary: var(--utb-blue);
+  --primary-hover: #004080;
+  --accent: var(--utb-yellow);
+  --accent-hover: #e5ae0d;
+  --success: var(--utb-green);
+  
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
   --text-main: #1e293b;
   --text-muted: #64748b;
   --border: #e2e8f0;
-  --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);

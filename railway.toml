@@ -1,0 +1,24 @@
+[build]
+builder = "nixpacks"
+# Install PHP extensions if needed
+# includes = ["php82-extensions"]
+
+[deploy]
+# Start command untuk production
+startCommand = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[env]
+# Railway specific configurations
+NIXPACKS_PHP_VERSION = "8.2"
+
+[postgres]
+# Jika menggunakan PostgreSQL, uncomment:
+# enabled = true
+# version = "15"
+
+[mysql]
+# Jika menggunakan MySQL, uncomment:
+# enabled = true
+# version = "8.0"

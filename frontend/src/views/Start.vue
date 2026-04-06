@@ -171,14 +171,14 @@ export default {
   position: absolute;
   top: -10%; left: -10%;
   width: 60%; height: 60%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 84, 164, 0.15) 0%, transparent 70%);
 }
 
 .glow-2 {
   position: absolute;
   bottom: -10%; right: -10%;
   width: 60%; height: 60%;
-  background: radial-gradient(circle, rgba(147, 51, 234, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 194, 14, 0.08) 0%, transparent 70%);
 }
 
 .main-wrapper {
@@ -200,7 +200,7 @@ export default {
 
 .top-accent {
   height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #9333ea);
+  background: linear-gradient(90deg, #0054A4, #FFC20E);
   opacity: 0.6;
 }
 
@@ -237,7 +237,7 @@ export default {
 .logo-pulse {
   position: absolute;
   inset: -10px;
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(0, 84, 164, 0.3);
   border-radius: 30px;
   animation: pulse-ring 4s infinite;
 }
@@ -252,6 +252,7 @@ export default {
   font-size: 2.25rem;
   font-weight: 700;
   background: linear-gradient(to bottom, #ffffff, #94a3b8);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 8px;
@@ -267,7 +268,7 @@ export default {
 .institution-name {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #60a5fa;
+  color: #FFC20E;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -310,13 +311,13 @@ export default {
 
 .premium-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #0054A4;
   background: rgba(13, 17, 23, 0.8);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 84, 164, 0.1);
 }
 
 .btn-primary-elegant {
-  background: #3b82f6;
+  background: #0054A4;
   color: white;
   border: none;
   padding: 16px;
@@ -327,9 +328,9 @@ export default {
 }
 
 .btn-primary-elegant:hover {
-  background: #2563eb;
+  background: #004080;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 20px -5px rgba(0, 84, 164, 0.4);
 }
 
 .error-alert {
@@ -366,7 +367,7 @@ export default {
 }
 
 .assessment-type {
-  color: #60a5fa;
+  color: #FFC20E;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -404,10 +405,10 @@ export default {
 .notice-box {
   display: flex;
   gap: 12px;
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(0, 84, 164, 0.08);
   padding: 16px;
   border-radius: 16px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(0, 84, 164, 0.2);
   margin-bottom: 24px;
   align-items: center;
 }
@@ -415,7 +416,7 @@ export default {
 .notice-icon {
   width: 20px;
   height: 20px;
-  background: #3b82f6;
+  background: #0054A4;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -434,7 +435,7 @@ export default {
 
 .btn-start-premium {
   width: 100%;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #0054A4, #FFC20E);
   color: white;
   border: none;
   padding: 18px;
@@ -443,12 +444,12 @@ export default {
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.4s ease;
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 84, 164, 0.4);
 }
 
 .btn-start-premium:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 20px 40px -10px rgba(0, 84, 164, 0.5);
 }
 
 .card-footer {
@@ -476,8 +477,8 @@ export default {
 .loader-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(59, 130, 246, 0.1);
-  border-top-color: #3b82f6;
+  border: 3px solid rgba(0, 84, 164, 0.1);
+  border-top-color: #FFC20E;
   border-radius: 50%;
   margin: 0 auto 16px;
   animation: spin 1s linear infinite;

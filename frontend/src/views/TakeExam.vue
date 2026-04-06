@@ -534,7 +534,7 @@ export default {
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.025em;
-  color: #38bdf8; /* Blue accent */
+  color: #FFC20E; /* UTB Yellow accent */
   margin: 0;
   text-transform: uppercase;
 }
@@ -560,20 +560,20 @@ export default {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: rgba(14, 165, 233, 0.1);
+  background: rgba(0, 84, 164, 0.1);
   border-radius: 0.75rem;
-  border: 1px solid rgba(14, 165, 233, 0.3);
+  border: 1px solid rgba(0, 84, 164, 0.3);
 }
 
 .timer-icon {
   width: 1.1rem;
   height: 1.1rem;
-  color: #38bdf8;
+  color: #FFC20E;
 }
 
 .timer-text {
   font-weight: 700;
-  color: #38bdf8;
+  color: #FFC20E;
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -641,22 +641,22 @@ export default {
 }
 
 .question-btn:hover {
-  border-color: #38bdf8;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.05);
+  border-color: #0054A4;
+  color: #0054A4;
+  background: rgba(0, 84, 164, 0.05);
 }
 
 .question-btn-current {
-  background: #0ea5e9 !important;
-  border-color: #38bdf8 !important;
+  background: #0054A4 !important;
+  border-color: #FFC20E !important;
   color: white !important;
-  box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 0 15px rgba(0, 84, 164, 0.4);
 }
 
 .question-btn-answered {
-  background: rgba(16, 185, 129, 0.1) !important;
-  border-color: #10b981 !important;
-  color: #34d399 !important;
+  background: rgba(0, 166, 81, 0.1) !important;
+  border-color: #00A651 !important;
+  color: #00A651 !important;
 }
 
 /* Sidebar Info & Legend */
@@ -692,8 +692,8 @@ export default {
   border-radius: 2px;
 }
 
-.legend-answered { background: #10b981; border: 1px solid #34d399; }
-.legend-current { background: #0ea5e9; border: 1px solid #38bdf8; }
+.legend-answered { background: #00A651; border: 1px solid #00A651; }
+.legend-current { background: #0054A4; border: 1px solid #FFC20E; }
 .legend-unanswered { background: #0f172a; border: 1px solid #334155; }
 
 /* Buttons */
@@ -765,15 +765,15 @@ export default {
 
 .question-number {
   font-size: 1.5rem;
-  color: #38bdf8;
+  color: #FFC20E;
   margin: 0;
 }
 
 .question-type {
   padding: 0.4rem 1rem;
-  background: rgba(56, 189, 248, 0.1);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(0, 84, 164, 0.1);
+  color: #0054A4;
+  border: 1px solid rgba(0, 84, 164, 0.2);
   border-radius: 2rem;
   font-size: 0.75rem;
   text-transform: uppercase;

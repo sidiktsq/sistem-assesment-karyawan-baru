@@ -154,14 +154,14 @@ export default {
   position: absolute;
   top: -10%; left: -10%;
   width: 60%; height: 60%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 84, 164, 0.15) 0%, transparent 70%);
 }
 
 .glow-2 {
   position: absolute;
   bottom: -10%; right: -10%;
   width: 60%; height: 60%;
-  background: radial-gradient(circle, rgba(147, 51, 234, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 194, 14, 0.08) 0%, transparent 70%);
 }
 
 .main-wrapper {
@@ -183,7 +183,7 @@ export default {
 
 .top-accent {
   height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #9333ea);
+  background: linear-gradient(90deg, #0054A4, #FFC20E);
   opacity: 0.6;
 }
 
@@ -201,20 +201,20 @@ export default {
 .check-box {
   width: 64px;
   height: 64px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
+  background: rgba(0, 84, 164, 0.1);
+  color: #FFC20E;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 20px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(0, 84, 164, 0.3);
   position: relative;
 }
 
 .icon-pulse {
   position: absolute;
   inset: -8px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(0, 84, 164, 0.3);
   border-radius: 24px;
   animation: pulse-ring 3s infinite;
 }
@@ -229,6 +229,7 @@ export default {
   font-size: 2.2rem;
   font-weight: 700;
   background: linear-gradient(to bottom, #ffffff, #94a3b8);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 8px;
@@ -275,9 +276,9 @@ export default {
 .pulse-dot {
   width: 6px;
   height: 6px;
-  background: #60a5fa;
+  background: #00A651;
   border-radius: 50%;
-  box-shadow: 0 0 10px #3b82f6;
+  box-shadow: 0 0 10px #00A651;
 }
 
 .status-text {
@@ -289,10 +290,10 @@ export default {
 }
 
 .instruction-box {
-  background: rgba(59, 130, 246, 0.03);
+  background: rgba(0, 84, 164, 0.05);
   padding: 18px;
   border-radius: 16px;
-  border: 1px dashed rgba(59, 130, 246, 0.15);
+  border: 1px dashed rgba(0, 84, 164, 0.3);
   font-size: 0.85rem;
   line-height: 1.6;
   color: #94a3b8;
@@ -365,9 +366,9 @@ export default {
 
 .btn-home {
   width: 100%;
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(0, 84, 164, 0.1);
+  color: #FFC20E;
+  border: 1px solid rgba(0, 84, 164, 0.3);
   padding: 14px;
   border-radius: 14px;
   font-size: 0.95rem;
@@ -377,11 +378,11 @@ export default {
 }
 
 .btn-home:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(0, 84, 164, 0.2);
   color: #ffffff;
-  border-color: #3b82f6;
+  border-color: #0054A4;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px -5px rgba(0, 84, 164, 0.4);
 }
 
 .copyright {
