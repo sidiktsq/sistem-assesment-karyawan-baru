@@ -12,7 +12,7 @@ restartPolicyMaxRetries = 3
 [env]
 # Railway specific configurations
 NIXPACKS_PHP_VERSION = "8.2"
-NIXPACKS_NODE_VERSION = "20"
+NIXPACKS_BUILD_CMD = "php artisan optimize"
 
 [postgres]
 # Jika menggunakan PostgreSQL, uncomment:
