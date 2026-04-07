@@ -12,7 +12,6 @@ restartPolicyMaxRetries = 3
 [env]
 # Railway specific configurations
 NIXPACKS_PHP_VERSION = "8.2"
-NIXPACKS_NODE_BUILD_CMD = "echo skipping node build"
 
 [postgres]
 # Jika menggunakan PostgreSQL, uncomment:
