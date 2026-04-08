@@ -5,7 +5,7 @@ builder = "nixpacks"
 
 [deploy]
 # Start command untuk production
-startCommand = "php artisan migrate --force && php artisan filament:assets && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+startCommand = "php artisan migrate --force && php artisan filament:assets && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
