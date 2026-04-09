@@ -1,59 +1,218 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SISTEM ASESMEN KARYAWAN BARU
+## Fullstack dengan Laravel + FilamentPHP
+### (Inti / Ringkasan)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+---
 
-## About Laravel
+## 1. KONSEP BISNIS
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 1.1. Gambaran Umum
+Sistem untuk melakukan asesmen terhadap calon karyawan baru. HRD bisa membuat bank soal, menjadwalkan ujian, dan reviewer (kepala departemen) bisa menilai hasil ujian kandidat.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1.2. 3 Aktor Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Aktor | Panel | Tugas Utama |
+|-------|-------|-------------|
+| **Super Admin (HRD)** | Admin Panel | • Kelola kandidat<br>• Kelola bank soal & assessment<br>• Assign assessment ke kandidat<br>• Lihat semua laporan |
+| **Reviewer (Dept Head)** | Reviewer Panel | • Lihat kandidat yang sudah selesai ujian<br>• Nilai jawaban esai<br>• Beri rekomendasi (approve/probation/reject) |
+| **Kandidat** | Halaman Ujian (Vue) | • Menerima email undangan<br>• Mengikuti ujian online<br>• Lihat hasil (jika diizinkan) |
 
-## Learning Laravel
+### 1.3. Alur Bisnis Sederhana
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```
+HRD (Admin Panel)
+    ↓
+Input data kandidat
+    ↓
+Buat assessment & soal
+    ↓
+Assign assessment ke kandidat
+    ↓
+[System] Kirim email undangan + link ujian
+    ↓
+Kandidat buka link → Ikut ujian → Submit
+    ↓
+[System] Koreksi otomatis (PG & Personality)
+    ↓
+Reviewer login ke Reviewer Panel
+    ↓
+Reviewer nilai jawaban esai
+    ↓
+Reviewer beri rekomendasi
+    ↓
+HRD lihat laporan akhir
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 2. STRUKTUR DATABASE (INTI)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2.1. Tabel-tabel Utama
 
-### Premium Partners
+| Tabel | Fungsi |
+|-------|--------|
+| `users` | Admin & reviewer |
+| `candidates` | Data kandidat |
+| `assessments` | Paket ujian |
+| `questions` | Bank soal |
+| `candidate_assessments` | Penugasan ujian ke kandidat |
+| `answers` | Jawaban kandidat |
+| `reviews` | Hasil review dari reviewer |
+| `invitations` | Undangan email + token |
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 2.2. Relasi Sederhana
 
-## Contributing
+```
+candidates ────< candidate_assessments >──── assessments
+                      │                              │
+                      ├──── answers >─── questions ──┘
+                      │
+                      └──── reviews
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 3. FITUR FILAMENT (ADMIN PANEL)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3.1. Resources untuk Admin
 
-## Security Vulnerabilities
+| Resource | Fungsi |
+|----------|--------|
+| **CandidateResource** | CRUD kandidat, assign assessment, kirim email |
+| **AssessmentResource** | CRUD paket ujian |
+| **QuestionResource** | CRUD soal (PG, Esai, Personality) |
+| **CandidateAssessmentResource** | Monitoring status ujian kandidat |
+| **ReportWidget** | Dashboard statistik |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 3.2. Fitur Khusus Admin
 
-## License
+- **Bulk Assign** - Assign assessment ke banyak kandidat sekaligus
+- **Duplicate Assessment** - Duplikasi paket ujian beserta soalnya
+- **Export Laporan** - Export ke Excel/PDF
+- **Invitation Email** - Kirim email otomatis dengan token
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 4. FITUR FILAMENT (REVIEWER PANEL)
+
+### 4.1. Resources untuk Reviewer
+
+| Resource | Fungsi |
+|----------|--------|
+| **PendingReviewResource** | Lihat kandidat yang perlu dinilai |
+| **AnswerResource** | Lihat jawaban esai, beri nilai & feedback |
+| **ReviewResource** | Beri rekomendasi akhir |
+
+### 4.2. Fitur Khusus Reviewer
+
+- **Grading Interface** - Interface khusus untuk nilai esai
+- **Recommendation System** - Approve/Probation/Reject dengan notes
+- **Aspect Scoring** - Nilai per aspek (Technical, Communication, dll)
+
+---
+
+## 5. FRONTEND UJIAN (VUE.JS)
+
+### 5.1. Halaman-halaman
+
+| Halaman | Fungsi |
+|---------|--------|
+| `Start.vue` | Halaman awal, validasi token |
+| `TakeExam.vue` | Halaman utama ujian dengan timer |
+| `Result.vue` | Hasil ujian (opsional) |
+
+### 5.2. Fitur Ujian
+
+- **Timer** - Hitung mundur, auto-submit jika habis
+- **Auto-save** - Jawaban tersimpan otomatis
+- **Navigation** - Navigasi antar soal
+- **Question Types** - PG, Esai, Personality (Likert scale)
+
+---
+
+## 6. FITUR OTOMATIS
+
+### 6.1. Auto-grading
+
+| Tipe Soal | Cara Nilai |
+|-----------|------------|
+| Multiple Choice | Cocokkan dengan `correct_answer` |
+| Personality | Simpan skala Likert, analisis nanti |
+| Essay | Manual oleh reviewer |
+
+### 6.2. Email Otomatis
+
+| Skenario | Pengirim |
+|----------|----------|
+| Assign assessment | Kirim link ujian + token |
+| Deadline reminder | (Opsional) |
+| Hasil sudah direview | (Opsional) |
+
+### 6.3. Token System
+
+- Setiap kandidat dapat token unik saat diassign
+- Token expires sesuai deadline
+- Token digunakan untuk akses halaman ujian (tanpa login)
+
+---
+
+## 7. STRUKTUR FOLDER FILAMENT
+
+```
+app/Filament/
+├── Admin/
+│   ├── Resources/
+│   │   ├── CandidateResource.php
+│   │   ├── AssessmentResource.php
+│   │   ├── QuestionResource.php
+│   │   └── CandidateAssessmentResource.php
+│   └── Widgets/
+│       ├── StatsOverviewWidget.php
+│       └── RecentCandidatesWidget.php
+│
+└── Reviewer/
+    ├── Resources/
+    │   ├── PendingReviewResource.php
+    │   ├── AnswerResource.php
+    │   └── ReviewResource.php
+    └── Pages/
+        └── GradeEssay.php
+```
+
+---
+
+## 8. FITUR UNGGULAN
+
+### 8.1. Untuk HRD (Admin)
+✅ Input kandidat cepat  
+✅ Buat assessment dengan berbagai tipe soal  
+✅ Assign ke banyak kandidat sekaligus  
+✅ Lihat dashboard real-time  
+✅ Export laporan Excel/PDF  
+
+### 8.2. Untuk Reviewer
+✅ Interface grading yang nyaman  
+✅ Lihat jawaban esai per kandidat  
+✅ Beri nilai + feedback  
+✅ Rekomendasi final dengan notes  
+
+### 8.3. Untuk Kandidat
+✅ Akses via email (tanpa register)  
+✅ Timer otomatis  
+✅ Auto-save jawaban  
+✅ Bisa lanjutkan jika koneksi putus  
+
+---
+
+## 9. TEKNOLOGI YANG DIGUNAKAN
+
+| Bagian | Teknologi |
+|--------|-----------|
+| Backend | Laravel 11 |
+| Admin Panel | FilamentPHP 3 |
+| Frontend Ujian | Vue.js 3 |
+| Database | MySQL/PostgreSQL |
+| Authentication | Laravel Sanctum |
+| Email | Laravel Mail |
+| Export | Laravel Excel, DomPDF |
+| Role & Permission | Spatie Permission |
