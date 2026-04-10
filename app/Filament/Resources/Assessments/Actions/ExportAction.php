@@ -66,7 +66,7 @@ class ExportAction
             ->modalSubmitActionLabel('Export');
     }
     
-    private static function exportExcel(Assessment $assessment, $candidateAssessments, array $include): BinaryFileResponse
+    private static function exportExcel(Assessment $assessment, $candidateAssessments, array $include)
     {
         $filename = "assessment_report_{$assessment->id}_" . date('Y-m-d_H-i-s') . ".xlsx";
         
@@ -93,31 +93,43 @@ class ExportAction
         }, $filename);
     }
     
-    private static function exportPdf(Assessment $assessment, $candidateAssessments, array $include): BinaryFileResponse
+    private static function exportPdf(Assessment $assessment, $candidateAssessments, array $include)
     {
-        // Implementation would use DomPDF package
         $filename = "assessment_report_{$assessment->id}_" . date('Y-m-d_H-i-s') . ".pdf";
         
-        return response()->streamDownload(function () use ($assessment, $candidateAssessments) {
-            echo "<h1>Laporan Assessment: {$assessment->title}</h1>";
-            echo "<table border='1'>";
-            echo "<tr><th>Nama</th><th>Status</th><th>Skor</th></tr>";
-            
-            foreach ($candidateAssessments as $ca) {
-                echo "<tr>";
-                echo "<td>{$ca->candidate->name}</td>";
-                echo "<td>{$ca->status}</td>";
-                echo "<td>{$ca->percentage}%</td>";
-                echo "</tr>";
-            }
-            
-            echo "</table>";
-        }, $filename, [
-            'Content-Type' => 'application/pdf',
-        ]);
+        $fpdf = new \Codedge\Fpdf\Fpdf\Fpdf();
+        $fpdf->AddPage();
+        $fpdf->SetFont('Arial', 'B', 16);
+        $fpdf->Cell(190, 10, 'Laporan Assessment: ' . $assessment->title, 0, 1, 'C');
+        $fpdf->SetFont('Arial', '', 10);
+        $fpdf->Cell(190, 10, 'Generated on: ' . date('Y-m-d H:i:s'), 0, 1, 'C');
+        $fpdf->Ln(10);
+
+        // Header Tabel
+        $fpdf->SetFont('Arial', 'B', 10);
+        $fpdf->SetFillColor(230, 230, 230);
+        $fpdf->Cell(60, 10, 'Nama Kandidat', 1, 0, 'C', true);
+        $fpdf->Cell(50, 10, 'Status', 1, 0, 'C', true);
+        $fpdf->Cell(40, 10, 'Skor', 1, 0, 'C', true);
+        $fpdf->Cell(40, 10, 'Persentase', 1, 1, 'C', true);
+
+        // Isi Tabel
+        $fpdf->SetFont('Arial', '', 10);
+        foreach ($candidateAssessments as $ca) {
+            $fpdf->Cell(60, 10, substr($ca->candidate->name, 0, 30), 1);
+            $fpdf->Cell(50, 10, ucfirst($ca->status), 1, 0, 'C');
+            $fpdf->Cell(40, 10, ($ca->total_score ?? 0) . ' / ' . ($ca->max_score ?? 0), 1, 0, 'C');
+            $fpdf->Cell(40, 10, ($ca->percentage ?? 0) . '%', 1, 1, 'C');
+        }
+
+        return response()->streamDownload(
+            fn () => print($fpdf->Output('S')),
+            $filename,
+            ['Content-Type' => 'application/pdf']
+        );
     }
     
-    private static function exportCsv(Assessment $assessment, $candidateAssessments, array $include): BinaryFileResponse
+    private static function exportCsv(Assessment $assessment, $candidateAssessments, array $include)
     {
         $filename = "assessment_report_{$assessment->id}_" . date('Y-m-d_H-i-s') . ".csv";
         

@@ -17,14 +17,17 @@ class CandidateAssessmentsTable
     {
         return $table
             ->columns([
-                TextColumn::make('candidate_id')
-                    ->numeric()
+                TextColumn::make('candidate.name')
+                    ->label('Candidate')
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('assessment_id')
-                    ->numeric()
+                TextColumn::make('assessment.title')
+                    ->label('Assessment')
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('assigned_by')
-                    ->numeric()
+                TextColumn::make('assigner.name')
+                    ->label('Assigned By')
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('scheduled_at')
                     ->dateTime()

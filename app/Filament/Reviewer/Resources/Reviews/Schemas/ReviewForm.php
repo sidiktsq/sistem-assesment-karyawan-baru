@@ -21,7 +21,8 @@ class ReviewForm
                     ->schema([
                         Select::make('candidate_assessment_id')
                             ->label('Assessment Session')
-                            ->relationship('candidateAssessment', 'id') // Simplified for now
+                            ->relationship('candidateAssessment', 'id')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->candidate->name} - {$record->assessment->title}")
                             ->required()
                             ->searchable()
                             ->preload(),
