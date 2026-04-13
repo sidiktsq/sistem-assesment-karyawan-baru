@@ -44,7 +44,7 @@ class AssessmentInvitation extends Mailable
                 'assessment'  => $this->candidateAssessment->assessment,
                 'scheduledAt' => $this->candidateAssessment->scheduled_at,
                 'deadline'    => $this->candidateAssessment->deadline,
-                'examUrl'     => config('app.frontend_url') . '/start/' . $this->candidateAssessment->access_token,
+                'examUrl'     => config('app.frontend_url'),
             ]
         );
     }

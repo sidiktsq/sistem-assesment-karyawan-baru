@@ -42,11 +42,15 @@ class CandidateAssessmentForm
                     ->schema([
                         Select::make('status')
                             ->options([
+                                'pending' => 'Pending',
                                 'scheduled' => 'Scheduled',
                                 'ongoing' => 'Ongoing',
                                 'completed' => 'Completed',
                                 'expired' => 'Expired',
                                 'reviewed' => 'Reviewed',
+                                'approved' => 'Approved',
+                                'rejected' => 'Rejected',
+                                'probation' => 'Probation',
                             ])
                             ->default('scheduled')
                             ->required()

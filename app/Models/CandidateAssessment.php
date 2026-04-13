@@ -29,10 +29,14 @@ class CandidateAssessment extends Model
                     'completed' => 'assessment_completed',
                     'reviewed' => 'reviewed',
                     'expired' => 'assessment_expired',
+                    'approved' => 'approved',
+                    'rejected' => 'rejected',
+                    'probation' => 'probation',
+                    'pending' => 'pending',
                     default => null,
                 };
 
-                if ($candidateStatus) {
+                if ($candidateStatus && $candidateAssessment->candidate->status !== $candidateStatus) {
                     $candidateAssessment->candidate->update(['status' => $candidateStatus]);
                 }
             }
