@@ -51,6 +51,11 @@ class BulkAssignAction
                 $invitationResults = [];
                 
                 foreach ($records as $candidate) {
+                    // Skip if completed or approved
+                    if (in_array($candidate->status, ['assessment_completed', 'approved'])) {
+                        continue;
+                    }
+                    
                     try {
                         // Check if an active assessment already exists
                         $candidateAssessment = CandidateAssessment::where('candidate_id', $candidate->id)

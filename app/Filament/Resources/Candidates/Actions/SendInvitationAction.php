@@ -16,6 +16,7 @@ class SendInvitationAction
             ->label('Kirim Undangan')
             ->icon('heroicon-o-paper-airplane')
             ->color('success')
+            ->hidden(fn ($record) => in_array($record?->status, ['assessment_completed', 'approved']))
             ->form([
                 \Filament\Forms\Components\Select::make('assessment_id')
                     ->label('Pilih Assessment')
