@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
+use App\Filament\Resources\Assessments\Actions\SmartImportAction;
 
 class AssessmentForm
 {
@@ -128,13 +129,18 @@ class AssessmentForm
 
                         Tab::make('Questions')
                             ->icon('heroicon-o-pencil-square')
-                            ->badge(fn ($record) => $record?->questions()->count() ?? 0)
+                            ->badge(fn ($get) => count($get('questions') ?? []))
                             ->schema([
                                 Section::make('Question Management')
                                     ->description('Compose the content of this assessment.')
+                                    ->headerActions([
+                                        SmartImportAction::make(),
+                                    ])
                                     ->schema([
                                         Repeater::make('questions')
                                             ->relationship('questions')
+                                            ->live()
+                                            ->partiallyRenderAfterActionsCalled(false)
                                             ->schema([
                                                 Grid::make(3)
                                                     ->schema([
@@ -211,7 +217,11 @@ class AssessmentForm
                                                             ->default('medium')
                                                             ->required()
                                                             ->native(false),
-                                                        TextInput::make('order')->numeric()->default(0),
+                                                        TextInput::make('order')
+                                                            ->numeric()
+                                                            ->default(0)
+                                                            ->minValue(0)
+                                                            ->required(),
                                                         Toggle::make('is_active')->label('Published')->default(true),
                                                     ]),
                                             ])

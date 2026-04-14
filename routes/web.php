@@ -21,7 +21,7 @@ Route::get('/debug-token/{token}', function ($token) {
 });
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/admin');
 });
 
 Route::prefix('exam')->group(function () {
