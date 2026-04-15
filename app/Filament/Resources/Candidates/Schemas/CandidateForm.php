@@ -29,7 +29,7 @@ class CandidateForm
                             ->maxLength(255),
                         TextInput::make('phone')
                             ->label('Phone Number')
-                            ->tel()
+                            ->numeric()
                             ->maxLength(255),
                         TextInput::make('position_applied')
                             ->label('Position Applied For')
