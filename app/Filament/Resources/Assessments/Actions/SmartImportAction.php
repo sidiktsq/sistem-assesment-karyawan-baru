@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Assessments\Actions;
 
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 
@@ -18,12 +19,22 @@ class SmartImportAction
             ->modalHeading('Import Soal dengan AI')
             ->modalDescription('Tempel teks soal dari PDF, Word, atau sumber mana pun. AI akan otomatis mendeteksi soal, pilihan, dan kunci jawaban.')
             ->form([
+                Radio::make('mode')
+                    ->label('Mode Import')
+                    ->options([
+                        'everything' => 'Semua (Soal, Jawaban, & Nilai)',
+                        'questions_only' => 'Hanya Soal (Generate/Extract Soal Sahaja)',
+                        'answers_only' => 'Hanya Jawaban (Generate Jawaban untuk Soal)',
+                        'scores_only' => 'Hanya Nilai (Generate Score & Difficulty)',
+                    ])
+                    ->default('everything')
+                    ->required(),
                 Textarea::make('content')
-                    ->label('Teks Soal')
-                    ->placeholder('Contoh: 1. Apa itu PHP? A. Bahasa Pemrograman B. Sayuran...')
+                    ->label('Teks Input / Topik')
+                    ->placeholder('Tempel soal atau ketik topik (misal: "Dasar-Dasar Keamanan Siber")')
                     ->rows(15)
                     ->required()
-                    ->helperText('Gunakan Copy-Paste dari file PDF atau Word Anda ke sini.'),
+                    ->helperText('Anda bisa menempelkan soal mentah atau hanya mengetik sebuah topik untuk dibuatkan soal baru oleh AI.'),
             ])
             ->action(function (array $data, $get, $set) {
                 $apiKey = config('services.gemini.key');
@@ -38,39 +49,55 @@ class SmartImportAction
                 }
 
                 $content = $data['content'];
+                $mode = $data['mode'];
+                $currentQuestions = $get('questions') ?? []; // Ambil soal yang sudah ada di form
 
-                $prompt = "Tujuan: Konversi teks berikut menjadi format JSON soal assessment yang sesuai untuk sistem kustom.
-                Teks input bisa berupa soal pilihan ganda atau essay dalam format apapun.
-                
-                ATURAN PENTING:
-                1. Output HARUS berupa array JSON valid.
-                2. JANGAN sertakan teks tambahan apa pun sebelum atau sesudah JSON block.
-                3. Jika ada pilihan ganda, deteksi teks soal, opsi (A-E), dan value (1 untuk benar, 0 untuk salah).
-                4. Jika ada essay, deteksi guideline-nya jika ada.
-                5. Field 'type' harus 'multiple_choice' atau 'essay'.
-                6. Field 'difficulty' harus 'easy', 'medium', atau 'hard'.
+                $modeInstructions = match($mode) {
+                    'everything' => [
+                        'role' => 'ASSESSMENT_ARCHITECT',
+                        'desc' => 'EKSTRAK SEMUA: question_text, type, section, score, difficulty, options, correct_answer, essay_guidelines. Jika tidak ada di teks, buatkan yang logis.',
+                    ],
+                    'questions_only' => [
+                        'role' => 'QUESTION_GENERATOR',
+                        'desc' => 'EKSTRAK HANYA: question_text, type, section. DILARANG KERAS mengisi: options (set []), correct_answer (set null), essay_guidelines (set null), score (set 0), difficulty (set "medium").',
+                    ],
+                    'answers_only' => [
+                        'role' => 'EXPERT_ANSWERER',
+                        'desc' => 'EKSTRAK: question_text. LENGKAPI/GENERATE: options, correct_answer, essay_guidelines. KOSONGKAN: score (set 0), difficulty (set "medium").',
+                    ],
+                    'scores_only' => [
+                        'role' => 'ASSESSMENT_GRADER',
+                        'desc' => 'EKSTRAK: question_text. TENTUKAN: score (1-10), difficulty. KOSONGKAN: options (set []), correct_answer (set null), essay_guidelines (set null).',
+                    ],
+                    default => [
+                        'role' => 'GENERAL_ASSISTANT',
+                        'desc' => 'Ekstrak soal secara lengkap.',
+                    ],
+                };
+
+                $prompt = "ANDA ADALAH: " . $modeInstructions['role'] . "\n" .
+                "PERINTAH KHUSUS: " . $modeInstructions['desc'] . "\n\n" .
+                "KONTEKS SOAL SAAT INI (Jika ada): \n" . json_encode($currentQuestions) . "\n\n" .
+                "TEKS INPUT DARI USER (Bisa berupa soal mentah atau instruksi): \n" . $content . "\n\n" .
+                "ATURAN OUTPUT:
+                1. Kembalikan HANYA array JSON soal yang valid.
+                2. PRIORITAS UTAMA: Jika teks input memiliki kunci jawaban (misal: 'Jawaban: A' atau 'Kunci: B'), Anda WAJIB mengekstraknya secara akurat tanpa mengubahnya. Jangan mencoba menjadikannya jawaban lain meskipun Anda merasa itu salah. Jadilah pengekstraksi yang setia.
+                3. Gunakan field 'type' (multiple_choice, essay), 'difficulty' (easy, medium, hard), dan 'score'.
                 
                 STRUKTUR JSON:
                 [
                   {
-                    \"question_text\": \"Teks soal\",
-                    \"type\": \"multiple_choice\" atau \"essay\",
-                    \"section\": \"general\",
-                    \"score\": 1,
-                    \"difficulty\": \"easy\", \"medium\", atau \"hard\",
-                    \"options\": [
-                       {\"option\": \"A\", \"text\": \"Teks opsi\", \"value\": 1 atau 0},
-                       {\"option\": \"B\", \"text\": \"Teks opsi\", \"value\": 0}
-                    ],
-                    \"correct_answer\": \"A\" (hanya untuk multiple_choice),
-                    \"essay_guidelines\": \"...\" (opsional),
-                    \"min_words\": 0,
-                    \"max_words\": 1000
+                    \"question_text\": \"...\",
+                    \"type\": \"...\",
+                    \"score\": integer,
+                    \"difficulty\": \"...\",
+                    \"options\": [{\"option\": \"A\", \"text\": \"...\", \"value\": 1}],
+                    \"correct_answer\": \"A\",
+                    \"essay_guidelines\": \"...\"
                   }
                 ]
-                
-                TEKS INPUT:
-                " . $content;
+
+                PENTING: Selalu patuhi instruksi 'Mode' di atas. Jika mode adalah 'questions_only', field selain soal (options, correct_answer, essay_guidelines, score) WAJIB kosong (set [], 0, atau null).";
 
                 try {
                     $response = Http::timeout(30)->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}", [
@@ -80,7 +107,11 @@ class SmartImportAction
                                     ['text' => $prompt]
                                 ]
                             ]
-                        ]
+                        ],
+                        'generationConfig' => [
+                            'temperature' => 0.1,
+                            'response_mime_type' => 'application/json',
+                        ],
                     ]);
 
                     if ($response->failed()) {
@@ -88,10 +119,7 @@ class SmartImportAction
                     }
 
                     $result = $response->json();
-                    $responseText = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                    
-                    // Cleanup possible markdown backticks
-                    $responseText = str_replace(['```json', '```'], '', $responseText);
+                    $responseText = $result['candidates'][0]['content']['parts'][0]['text'] ?? '[]';
                     $questions = json_decode($responseText, true);
 
                     if (!is_array($questions)) {
@@ -109,14 +137,14 @@ class SmartImportAction
                         }
                     }
 
-                    $currentState = $get('questions') ?? [];
-                    
-                    // Filter out empty placeholder questions before merging
-                    $currentState = array_filter($currentState, function ($question) {
-                        return !empty($question['question_text']) || !empty($question['options']) || !empty($question['id']);
-                    });
-
-                    $set('questions', array_merge($currentState, $questions));
+                    // Logika Penggabungan (Merge vs Update)
+                    if (in_array($mode, ['scores_only', 'answers_only']) && !empty($currentQuestions) && count($questions) >= count($currentQuestions)) {
+                         // Mode Update: Ganti semua dengan hasil dari AI
+                         $set('questions', $questions);
+                    } else {
+                         // Mode Import: Tambahkan ke yang sudah ada
+                         $set('questions', array_merge($currentQuestions, $questions));
+                    }
 
                     Notification::make()
                         ->title('Berhasil Memproses Soal')
