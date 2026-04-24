@@ -72,6 +72,26 @@
 </head>
 <body>
     <div class="header">
+        @php
+            $logoDir = public_path('images');
+            $logoPath = $logoDir . '/logo-utb.png';
+            if (!file_exists($logoPath)) {
+                if (!is_dir($logoDir)) {
+                    mkdir($logoDir, 0755, true);
+                }
+                $context = stream_context_create([
+                    'http' => [
+                        'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\n"
+                    ]
+                ]);
+                @copy('https://upload.wikimedia.org/wikipedia/commons/8/86/Universitas_Teknologi_Bandung_Logo.png', $logoPath, $context);
+            }
+        @endphp
+        @if(file_exists($logoPath))
+            <img src="{{ $logoPath }}" alt="UTB Logo" style="height: 60px; margin-bottom: 10px;">
+        @else
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Universitas_Teknologi_Bandung_Logo.png" alt="UTB Logo" style="height: 60px; margin-bottom: 10px;">
+        @endif
         <h1>Final Review Report</h1>
         <p>Report Date: {{ date('F d, Y H:i') }}</p>
     </div>

@@ -49,6 +49,9 @@ class CandidateAssessmentsTable
                         'completed' => 'success',
                         'expired' => 'danger',
                         'reviewed' => 'primary',
+                        'approved' => 'success',
+                        'probation' => 'warning',
+                        'rejected' => 'danger',
                         default => 'gray',
                     }),
                 TextColumn::make('total_score')
@@ -86,6 +89,9 @@ class CandidateAssessmentsTable
                         'completed' => 'Completed',
                         'expired' => 'Expired',
                         'reviewed' => 'Reviewed',
+                        'approved' => 'Approved',
+                        'probation' => 'Probation',
+                        'rejected' => 'Rejected',
                     ]),
                 \Filament\Tables\Filters\SelectFilter::make('result')
                     ->options([

@@ -55,19 +55,19 @@ class SmartImportAction
                 $modeInstructions = match($mode) {
                     'everything' => [
                         'role' => 'ASSESSMENT_ARCHITECT',
-                        'desc' => 'EKSTRAK SEMUA: question_text, type, section, score, difficulty, options, correct_answer, essay_guidelines. Jika tidak ada di teks, buatkan yang logis.',
+                        'desc' => 'EKSTRAK SEMUA: question_text, type, section, score, difficulty, options, correct_answer, essay_guidelines, min_words, max_words. Jika tidak ada di teks, buatkan yang logis.',
                     ],
                     'questions_only' => [
                         'role' => 'QUESTION_GENERATOR',
-                        'desc' => 'EKSTRAK HANYA: question_text, type, section. DILARANG KERAS mengisi: options (set []), correct_answer (set null), essay_guidelines (set null), score (set 0), difficulty (set "medium").',
+                        'desc' => 'FOKUS HANYA PADA: question_text, type, section. Jangan mengubah atau mengosongkan field lainnya.',
                     ],
                     'answers_only' => [
                         'role' => 'EXPERT_ANSWERER',
-                        'desc' => 'EKSTRAK: question_text. LENGKAPI/GENERATE: options, correct_answer, essay_guidelines. KOSONGKAN: score (set 0), difficulty (set "medium").',
+                        'desc' => 'FOKUS HANYA PADA: options, correct_answer, essay_guidelines. Jangan mengubah atau mengosongkan field lainnya.',
                     ],
                     'scores_only' => [
                         'role' => 'ASSESSMENT_GRADER',
-                        'desc' => 'EKSTRAK: question_text. TENTUKAN: score (1-10), difficulty. KOSONGKAN: options (set []), correct_answer (set null), essay_guidelines (set null).',
+                        'desc' => 'FOKUS HANYA PADA: score (1-10), difficulty. Jangan mengubah atau mengosongkan field lainnya.',
                     ],
                     default => [
                         'role' => 'GENERAL_ASSISTANT',
@@ -81,8 +81,10 @@ class SmartImportAction
                 "TEKS INPUT DARI USER (Bisa berupa soal mentah atau instruksi): \n" . $content . "\n\n" .
                 "ATURAN OUTPUT:
                 1. Kembalikan HANYA array JSON soal yang valid.
-                2. PRIORITAS UTAMA: Jika teks input memiliki kunci jawaban (misal: 'Jawaban: A' atau 'Kunci: B'), Anda WAJIB mengekstraknya secara akurat tanpa mengubahnya. Jangan mencoba menjadikannya jawaban lain meskipun Anda merasa itu salah. Jadilah pengekstraksi yang setia.
-                3. Gunakan field 'type' (multiple_choice, essay), 'difficulty' (easy, medium, hard), dan 'score'.
+                2. PRIORITAS UTAMA: Jika teks input memiliki kunci jawaban (misal: 'Jawaban: A' atau 'Kunci: B'), Anda WAJIB mengekstraknya secara akurat tanpa mengubahnya.
+                3. Jika Anda memperbarui atau mengubah soal tertentu (misal: \"ubah order 1\"), Anda WAJIB menyertakan field \"order\" dengan nilai integer yang sesuai (misal: \"order\": 1).
+                4. HANYA sertakan soal yang datanya berubah atau diminta untuk diubah di dalam JSON. Jangan mengirimkan soal yang tidak ada perubahannya.
+                5. Jika mode adalah 'scores_only' atau 'answers_only', kembalikan HANYA field yang diminta saja di dalam JSON agar tidak menimpa data lain.
                 
                 STRUKTUR JSON:
                 [
@@ -93,14 +95,18 @@ class SmartImportAction
                     \"difficulty\": \"...\",
                     \"options\": [{\"option\": \"A\", \"text\": \"...\", \"value\": 1}],
                     \"correct_answer\": \"A\",
-                    \"essay_guidelines\": \"...\"
+                    \"essay_guidelines\": \"...\",
+                    \"min_words\": integer,
+                    \"max_words\": integer
                   }
                 ]
 
-                PENTING: Selalu patuhi instruksi 'Mode' di atas. Jika mode adalah 'questions_only', field selain soal (options, correct_answer, essay_guidelines, score) WAJIB kosong (set [], 0, atau null).";
+                PENTING: Selalu patuhi instruksi 'Mode' di atas. Jangan mengembalikan nilai kosong ([]) untuk field yang tidak diminta.";
 
                 try {
-                    $response = Http::timeout(30)->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}", [
+                    $response = Http::timeout(60)
+                        ->retry(3, 2000)
+                        ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$apiKey}", [
                         'contents' => [
                             [
                                 'parts' => [
@@ -110,7 +116,6 @@ class SmartImportAction
                         ],
                         'generationConfig' => [
                             'temperature' => 0.1,
-                            'response_mime_type' => 'application/json',
                         ],
                     ]);
 
@@ -120,43 +125,131 @@ class SmartImportAction
 
                     $result = $response->json();
                     $responseText = $result['candidates'][0]['content']['parts'][0]['text'] ?? '[]';
+
+                    // Robust JSON Extraction (Menghapus markdown code blocks jika ada)
+                    if (preg_match('/\[.*\]/s', $responseText, $matches)) {
+                        $responseText = $matches[0];
+                    }
+
                     $questions = json_decode($responseText, true);
 
-                    if (!is_array($questions)) {
-                        throw new \Exception('Format respon AI tidak valid.');
+                    if (!is_array($questions) || empty($questions)) {
+                        throw new \Exception('AI tidak mengembalikan data soal yang valid atau input tidak bisa diproses.');
                     }
 
-                    // Ensure all imported questions are active by default and have an order
-                    foreach ($questions as &$question) {
-                        if (!isset($question['is_active'])) {
-                            $question['is_active'] = true;
+                    // Logika Penggabungan (Smart Merge) & Deteksi Perubahan
+                    $modifiedOrders = [];
+                    $currentQuestionsCollection = collect($currentQuestions);
+                    $newQuestions = [];
+                    $updatedQuestionsMap = []; // Map of [index => updated_question]
+
+                    foreach ($questions as $aiIndex => $aiQuestion) {
+                        $aiOrder = $aiQuestion['order'] ?? 0;
+                        $filteredAiQuestion = array_filter($aiQuestion, function($value) {
+                            return $value !== null && $value !== [] && $value !== '';
+                        });
+
+                        // Cari apakah ada soal dengan order yang sama
+                        $existingQuestionKey = $currentQuestionsCollection->search(function ($item) use ($aiOrder) {
+                            return (int)($item['order'] ?? -1) === (int)$aiOrder;
+                        });
+
+                        if ($existingQuestionKey !== false) {
+                            // Deteksi Perubahan
+                            $hasChanges = false;
+                            foreach ($filteredAiQuestion as $key => $value) {
+                                if (!isset($currentQuestions[$existingQuestionKey][$key]) || $currentQuestions[$existingQuestionKey][$key] != $value) {
+                                    $hasChanges = true;
+                                    break;
+                                }
+                            }
+
+                            if ($hasChanges) {
+                                $modifiedOrders[] = (int)$aiOrder;
+                            }
+                            
+                            // Update Soal yang Ada (Hanya jika ada perubahan untuk efisiensi)
+                            if ($hasChanges) {
+                                $updatedQuestionsMap[$existingQuestionKey] = array_merge($currentQuestions[$existingQuestionKey], $filteredAiQuestion);
+                            }
+                        } else {
+                            // Tambah Soal Baru
+                            $aiQuestion['is_active'] = $aiQuestion['is_active'] ?? true;
+                            if ($aiOrder == 0) {
+                                $lastOrder = $currentQuestionsCollection->max('order') ?? 0;
+                                $aiQuestion['order'] = $lastOrder + count($newQuestions) + 1;
+                            }
+                            $newQuestions[] = $aiQuestion;
+                            $modifiedOrders[] = $aiQuestion['order'];
                         }
-
-                        if (!isset($question['order'])) {
-                            $question['order'] = 0;
-                        }
                     }
 
-                    // Logika Penggabungan (Merge vs Update)
-                    if (in_array($mode, ['scores_only', 'answers_only']) && !empty($currentQuestions) && count($questions) >= count($currentQuestions)) {
-                         // Mode Update: Ganti semua dengan hasil dari AI
-                         $set('questions', $questions);
-                    } else {
-                         // Mode Import: Tambahkan ke yang sudah ada
-                         $set('questions', array_merge($currentQuestions, $questions));
+                    // Terapkan update ke array asli
+                    $finalQuestions = $currentQuestions;
+                    foreach ($updatedQuestionsMap as $key => $updatedData) {
+                        $finalQuestions[$key] = $updatedData;
                     }
+
+                    // Gabungkan dengan soal baru
+                    $finalQuestions = array_merge($finalQuestions, $newQuestions);
+
+                    $set('questions', $finalQuestions);
+
+                    // Hanya ambil data unik dan urutkan
+                    $orderList = collect($modifiedOrders)->unique()->sort()->implode(', ');
+                    
+                    // Jika tidak ada yang berubah, gunakan jumlah total sebagai fallback
+                    if (empty($orderList)) {
+                        $orderList = count($questions);
+                    }
+
+                    $notificationData = match($mode) {
+                        'everything' => [
+                            'title' => 'Berhasil Memproses Soal',
+                            'body' => 'Seluruh data soal telah berhasil dimasukkan kembali.',
+                            'color' => 'success',
+                            'icon' => 'heroicon-o-check-circle',
+                        ],
+                        'questions_only' => [
+                            'title' => "Soal order {$orderList} sudah diubah",
+                            'body' => 'Struktur pertanyaan telah berhasil diperbarui.',
+                            'color' => 'info',
+                            'icon' => 'heroicon-o-document-text',
+                        ],
+                        'answers_only' => [
+                            'title' => "Jawaban untuk order {$orderList} sudah diubah",
+                            'body' => 'Kunci jawaban telah berhasil diperbarui.',
+                            'color' => 'warning',
+                            'icon' => 'heroicon-o-key',
+                        ],
+                        'scores_only' => [
+                            'title' => "Nilai untuk order {$orderList} sudah diubah",
+                            'body' => 'Skor dan tingkat kesulitan telah berhasil diperbarui.',
+                            'color' => 'info',
+                            'icon' => 'heroicon-o-chart-bar',
+                        ],
+                        default => [
+                            'title' => 'Berhasil Memproses Soal',
+                            'body' => "Soal dengan nomor urut {$orderList} telah diproses.",
+                            'color' => 'success',
+                            'icon' => 'heroicon-o-check',
+                        ],
+                    };
 
                     Notification::make()
-                        ->title('Berhasil Memproses Soal')
-                        ->body(count($questions) . ' soal telah terdeteksi dan dimasukkan ke daftar.')
+                        ->title($notificationData['title'])
+                        ->body($notificationData['body'])
+                        ->color($notificationData['color'])
+                        ->icon($notificationData['icon'])
                         ->success()
                         ->send();
 
                 } catch (\Exception $e) {
                     Notification::make()
-                        ->title('Oops! Terjadi kesalahan')
-                        ->body($e->getMessage())
+                        ->title('Gagal Menghubungi AI')
+                        ->body("Detail: " . $e->getMessage() . ". Pastikan model yang digunakan aktif di region Anda.")
                         ->danger()
+                        ->persistent()
                         ->send();
                 }
             });

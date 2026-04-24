@@ -402,6 +402,10 @@ export default {
       return this.answers[questionId] ? 'answered' : 'unanswered'
     },
     
+    getUnansweredQuestions() {
+      return this.questions.filter(question => !this.answers[question.id])
+    },
+    
     formatQuestionType(type) {
       if (!type) return ''
       type = type.toLowerCase()
@@ -447,6 +451,26 @@ export default {
     },
     
     async submitExam(isAuto = false) {
+      // Check if all questions are answered
+      const unansweredQuestions = this.getUnansweredQuestions()
+      
+      if (unansweredQuestions.length > 0) {
+        const questionNumbers = unansweredQuestions.map(q => {
+          const index = this.questions.findIndex(que => que.id === q.id)
+          return `Soal ${index + 1}`
+        }).join(', ')
+        
+        Swal.fire({
+          title: 'Soal Belum Lengkap!',
+          html: `<p>Berikut soal yang masih belum terjawab:</p><p style="font-weight: bold; color: #f87171;">${questionNumbers}</p><p>Silakan lengkapi semua soal sebelum mengirim.</p>`,
+          icon: 'warning',
+          confirmButtonColor: '#ef4444',
+          background: '#1e293b',
+          color: '#f8fafc'
+        })
+        return
+      }
+      
       if (!isAuto) {
         const result = await Swal.fire({
           title: 'Selesaikan Assessment?',

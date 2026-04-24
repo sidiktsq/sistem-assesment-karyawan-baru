@@ -8,7 +8,9 @@ use App\Filament\Reviewer\Resources\Answers\Pages\ListAnswers;
 use App\Filament\Reviewer\Resources\Answers\Schemas\AnswerForm;
 use App\Filament\Reviewer\Resources\Answers\Tables\AnswersTable;
 use App\Models\Answer;
+use App\Models\CandidateAssessment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -16,7 +18,7 @@ use Filament\Tables\Table;
 
 class AnswerResource extends Resource
 {
-    protected static ?string $model = Answer::class;
+    protected static ?string $model = CandidateAssessment::class;
 
     protected static ?string $slug = 'grade-answers';
 
@@ -30,17 +32,13 @@ class AnswerResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        $query = parent::getEloquentQuery()
-            ->whereHas('question', function ($query) {
-                $query->whereIn('type', ['essay', 'short_answer', 'personality']);
+        return parent::getEloquentQuery()
+            ->whereIn('status', ['completed', 'reviewed'])
+            ->whereHas('answers', function ($query) {
+                $query->whereHas('question', function ($q) {
+                    $q->whereIn('type', ['essay', 'short_answer']);
+                });
             });
-
-        // Filter by candidate_assessment_id if provided in the URL
-        if (\Illuminate\Support\Facades\Request::has('candidate_assessment_id')) {
-            $query->where('candidate_assessment_id', \Illuminate\Support\Facades\Request::query('candidate_assessment_id'));
-        }
-
-        return $query;
     }
 
     public static function form(Schema $schema): Schema
@@ -52,26 +50,38 @@ class AnswerResource extends Resource
     {
         return $table
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('candidateAssessment.candidate.name')
-                    ->label('Kandidat')
+                \Filament\Tables\Columns\TextColumn::make('candidate.name')
+                    ->label('Nama')
                     ->searchable()
                     ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('question.question_text')
-                    ->label('Soal')
-                    ->limit(60)
-                    ->searchable(),
-                \Filament\Tables\Columns\TextColumn::make('answer')
-                    ->label('Jawaban Kandidat')
-                    ->limit(80)
-                    ->wrap(),
-                \Filament\Tables\Columns\TextColumn::make('score_obtained')
-                    ->label('Skor')
-                    ->default('Belum dinilai')
+                \Filament\Tables\Columns\TextColumn::make('assessment.title')
+                    ->label('Assesment')
+                    ->searchable()
                     ->sortable(),
-                \Filament\Tables\Columns\IconColumn::make('is_reviewed')
+                \Filament\Tables\Columns\TextColumn::make('essay_score')
+                    ->label('Skor Essay')
+                    ->getStateUsing(fn ($record) => $record->essay_score)
+                    ->sortable(),
+                \Filament\Tables\Columns\IconColumn::make('status')
                     ->label('Sudah Dinilai')
-                    ->boolean()
-                    ->getStateUsing(fn ($record) => $record->reviewed_at !== null || $record->score_obtained !== null),
+                    ->icon(fn (string $state): string => match ($state) {
+                        'reviewed' => 'heroicon-o-check-circle',
+                        'completed' => 'heroicon-o-x-circle',
+                        default => 'heroicon-o-clock',
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'reviewed' => 'success',
+                        'completed' => 'danger',
+                        default => 'gray',
+                    }),
+            ])
+            ->actions([
+                Action::make('nilai')
+                    ->label('Nilai')
+                    ->button()
+                    ->color('warning')
+                    ->icon('heroicon-o-pencil-square')
+                    ->url(fn ($record) => AnswerResource::getUrl('edit', ['record' => $record])),
             ])
             ->filters([
                 \Filament\Tables\Filters\TernaryFilter::make('reviewed_at')

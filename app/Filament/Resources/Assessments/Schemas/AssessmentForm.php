@@ -33,6 +33,7 @@ class AssessmentForm
                                             ->schema([
                                                 TextInput::make('title')
                                                     ->required()
+                                                    ->live(onBlur: true)
                                                     ->placeholder('e.g. Senior PHP Developer Assessment')
                                                     ->maxLength(255)
                                                     ->columnSpanFull(),
@@ -104,6 +105,7 @@ class AssessmentForm
                                     ->icon('heroicon-o-list-bullet')
                                     ->schema([
                                         Repeater::make('sections')
+                                            ->live(onBlur: true)
                                             ->schema([
                                                 TextInput::make('name')
                                                     ->required()

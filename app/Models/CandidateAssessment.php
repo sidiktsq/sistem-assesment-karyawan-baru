@@ -9,6 +9,12 @@ use Illuminate\Support\Carbon;
 
 class CandidateAssessment extends Model
 {
+    public function syncStatusWithCandidate()
+    {
+        if ($this->candidate && in_array($this->candidate->status, ['approved', 'rejected', 'probation'])) {
+            $this->update(['status' => $this->candidate->status]);
+        }
+    }
     protected static function booted()
     {
         static::creating(function ($candidateAssessment) {

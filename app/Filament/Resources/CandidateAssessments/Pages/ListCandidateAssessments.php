@@ -47,6 +47,28 @@ class ListCandidateAssessments extends ListRecords
                     
                     $fpdf = new Fpdf();
                     $fpdf->AddPage();
+                    
+                    // Add UTB Logo (with local cache to avoid 403)
+                    $logoDir = public_path('images');
+                    $logoPath = $logoDir . '/logo-utb.png';
+                    
+                    if (!file_exists($logoPath)) {
+                        if (!is_dir($logoDir)) {
+                            mkdir($logoDir, 0755, true);
+                        }
+                        $context = stream_context_create([
+                            'http' => [
+                                'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\n"
+                            ]
+                        ]);
+                        @copy('https://upload.wikimedia.org/wikipedia/commons/8/86/Universitas_Teknologi_Bandung_Logo.png', $logoPath, $context);
+                    }
+
+                    if (file_exists($logoPath)) {
+                        $fpdf->Image($logoPath, 95, 10, 20);
+                    }
+                    $fpdf->Ln(25);
+
                     $fpdf->SetFont('Arial', 'B', 16);
                     $fpdf->Cell(190, 10, 'Candidate Assessments Report', 0, 1, 'C');
                     $fpdf->SetFont('Arial', '', 10);

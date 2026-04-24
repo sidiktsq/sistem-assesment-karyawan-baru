@@ -10,8 +10,17 @@ class Review extends Model
     {
         static::saved(function ($review) {
             $candidate = $review->candidateAssessment->candidate;
-            if ($candidate && in_array($review->recommendation, ['approved', 'probation', 'rejected'])) {
-                $candidate->update(['status' => $review->recommendation]);
+            $candidateAssessment = $review->candidateAssessment;
+            
+            if (in_array($review->recommendation, ['approved', 'probation', 'rejected'])) {
+                // Update Candidate status
+                if ($candidate) {
+                    $candidate->update(['status' => $review->recommendation]);
+                }
+                // Update CandidateAssessment status to match
+                if ($candidateAssessment) {
+                    $candidateAssessment->update(['status' => $review->recommendation]);
+                }
             }
         });
     }

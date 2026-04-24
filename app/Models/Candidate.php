@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Candidate extends Model
 {
+    protected static function booted()
+    {
+        static::updated(function ($candidate) {
+            if ($candidate->isDirty('status')) {
+                foreach ($candidate->assessments as $assessment) {
+                    $assessment->syncStatusWithCandidate();
+                }
+            }
+        });
+    }
     use HasFactory;
     protected $fillable = [
         'name',
