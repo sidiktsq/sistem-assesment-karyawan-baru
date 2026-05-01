@@ -106,7 +106,7 @@ class CandidateAssessmentsTable
                     ->label('Send Results')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('success')
-                    ->visible(fn ($record) => $record->status === 'reviewed' && !$record->result_sent_at)
+                    ->visible(fn ($record) => in_array($record->status, ['reviewed', 'approved', 'rejected', 'probation']) && !$record->result_sent_at)
                     ->action(function ($record) {
                         try {
                             $record->sendResultEmail();

@@ -116,7 +116,7 @@ Route::prefix('exam')->group(function () {
         }
         
         $validated = $request->validate([
-            'answers' => 'required|array'
+            'answers' => 'present|array'
         ]);
         
         // Batch save answers (map format: question_id => answer)
@@ -147,7 +147,7 @@ Route::prefix('exam')->group(function () {
         }
         
         $validated = $request->validate([
-            'answers' => 'required|array'
+            'answers' => 'present|array'
         ]);
         
         // Save all final answers
@@ -170,30 +170,34 @@ Route::prefix('exam')->group(function () {
         // Essay           → Manual oleh reviewer (score = 0 dari sistem)
         $totalScore = 0;
         $maxScore = 0;
-        $hasManualGrading = false; // true jika ada essay atau personality yang butuh review
+        $answeredCount = count($validated['answers']);
         
         foreach ($ca->assessment->questions as $question) {
-            $answer = \App\Models\Answer::where('candidate_assessment_id', $ca->id)
-                ->where('question_id', $question->id)
-                ->first();
+            // Ensure an answer record exists for every question (even if not answered)
+            $answer = \App\Models\Answer::firstOrCreate(
+                [
+                    'candidate_assessment_id' => $ca->id,
+                    'question_id' => $question->id
+                ],
+                [
+                    'answer' => '',
+                    'answered_at' => now()
+                ]
+            );
             
             $maxScore += $question->score;
             
             if ($question->type === 'multiple_choice') {
                 // ✅ Auto-grade: cocokkan jawaban dengan correct_answer
-                if ($answer && $answer->answer === $question->correct_answer) {
+                if ($answer->answer === $question->correct_answer) {
                     $totalScore += $question->score;
-                    if ($answer) {
-                        $answer->update(['score_obtained' => $question->score, 'is_correct' => true]);
-                    }
+                    $answer->update(['score_obtained' => $question->score, 'is_correct' => true]);
                 } else {
-                    if ($answer) {
-                        $answer->update(['score_obtained' => 0, 'is_correct' => false]);
-                    }
+                    $answer->update(['score_obtained' => 0, 'is_correct' => false]);
                 }
             } elseif ($question->type === 'personality') {
                 // ✅ Personality auto-grade: Full score if answered
-                if ($answer && !empty($answer->answer)) {
+                if (!empty($answer->answer)) {
                     $totalScore += $question->score;
                     $answer->update([
                         'score_obtained' => $question->score,
@@ -201,20 +205,45 @@ Route::prefix('exam')->group(function () {
                         'reviewed_at' => now(),
                         'needs_review' => false
                     ]);
+                } else {
+                    // Personality gets 0 if not answered
+                    $answer->update([
+                        'score_obtained' => 0,
+                        'is_correct' => false,
+                        'reviewed_at' => now(),
+                        'needs_review' => false
+                    ]);
                 }
             } elseif ($question->type === 'essay' || $question->type === 'short_answer') {
                 // ✅ Manual oleh reviewer
                 $hasManualGrading = true;
+                
+                // If not answered at all, we can pre-set score to 0
+                if (empty($answer->answer)) {
+                    $answer->update(['score_obtained' => 0, 'reviewed_at' => now()]);
+                }
             }
         }
         
         // Update assessment status
-        $ca->update([
-            'status' => 'completed',
-            'completed_at' => now(),
-            'total_score' => $totalScore,
-            'max_score' => $maxScore
-        ]);
+        // If not a single question was answered, auto-finalize as reviewed with 0 score
+        if ($answeredCount === 0) {
+            $ca->update([
+                'status' => 'reviewed',
+                'completed_at' => now(),
+                'total_score' => 0,
+                'max_score' => $maxScore,
+                'percentage' => 0,
+                'result' => 'fail'
+            ]);
+        } else {
+            $ca->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'total_score' => $totalScore,
+                'max_score' => $maxScore
+            ]);
+        }
         
         return response()->json([
             'success' => true,

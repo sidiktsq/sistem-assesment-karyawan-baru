@@ -129,8 +129,11 @@
                     v-for="(option, index) in currentQuestion.options"
                     :key="index"
                     class="option-item"
-                    @click="selectAnswer(getOptionKey(option))"
-                    :class="{ 'option-selected': currentAnswer === getOptionKey(option) }"
+                    @click="!submitting && selectAnswer(getOptionKey(option))"
+                    :class="{ 
+                      'option-selected': currentAnswer === getOptionKey(option),
+                      'option-disabled': submitting 
+                    }"
                   >
                     <div class="option-content-wrapper">
                       <div class="option-indicator">
@@ -149,6 +152,7 @@
                   class="essay-textarea"
                   placeholder="Ketik jawaban lengkap Anda di sini..."
                   rows="8"
+                  :disabled="submitting"
                 ></textarea>
                 <div class="essay-footer">
                   <span class="word-count">{{ (currentAnswer || '').split(/\s+/).filter(x => x).length }} kata</span>
@@ -160,16 +164,16 @@
                 <div class="tf-options">
                   <div 
                     class="tf-option"
-                    @click="selectAnswer('True')"
-                    :class="{ 'tf-selected': currentAnswer === 'True' }"
+                    @click="!submitting && selectAnswer('True')"
+                    :class="{ 'tf-selected': currentAnswer === 'True', 'tf-disabled': submitting }"
                   >
                     <div class="tf-indicator"></div>
                     <span class="tf-label">Benar (True)</span>
                   </div>
                   <div 
                     class="tf-option"
-                    @click="selectAnswer('False')"
-                    :class="{ 'tf-selected': currentAnswer === 'False' }"
+                    @click="!submitting && selectAnswer('False')"
+                    :class="{ 'tf-selected': currentAnswer === 'False', 'tf-disabled': submitting }"
                   >
                     <div class="tf-indicator"></div>
                     <span class="tf-label">Salah (False)</span>
@@ -180,12 +184,13 @@
               <!-- Short Answer -->
               <div v-else-if="currentQuestion.type.toLowerCase() === 'short_answer'" class="short-answer">
                 <div class="input-wrapper">
-                  <input
-                    type="text"
-                    v-model="currentAnswer"
-                    class="short-answer-input"
-                    placeholder="Ketik jawaban singkat..."
-                  >
+                    <input
+                      type="text"
+                      v-model="currentAnswer"
+                      class="short-answer-input"
+                      placeholder="Ketik jawaban singkat..."
+                      :disabled="submitting"
+                    >
                 </div>
               </div>
 
@@ -196,8 +201,11 @@
                     v-for="(option, index) in (getQuestionOptions(currentQuestion))"
                     :key="index"
                     class="personality-option"
-                    @click="selectAnswer(getOptionKey(option))"
-                    :class="{ 'personality-selected': currentAnswer === getOptionKey(option) }"
+                    @click="!submitting && selectAnswer(getOptionKey(option))"
+                    :class="{ 
+                      'personality-selected': currentAnswer === getOptionKey(option),
+                      'personality-disabled': submitting
+                    }"
                   >
                     <div class="personality-content">
                       <div class="personality-scale">{{ getOptionKey(option) }}</div>
@@ -359,6 +367,7 @@ export default {
     },
     
     selectAnswer(value) {
+      if (this.submitting) return
       this.currentAnswer = value
     },
     
@@ -451,25 +460,42 @@ export default {
     },
     
     async submitExam(isAuto = false) {
-      // Check if all questions are answered
-      const unansweredQuestions = this.getUnansweredQuestions()
-      
-      if (unansweredQuestions.length > 0) {
-        const questionNumbers = unansweredQuestions.map(q => {
-          const index = this.questions.findIndex(que => que.id === q.id)
-          return `Soal ${index + 1}`
-        }).join(', ')
+      // Check if all questions are answered - Only if NOT auto-submitting
+      if (!isAuto) {
+        const unansweredQuestions = this.getUnansweredQuestions()
         
-        Swal.fire({
-          title: 'Soal Belum Lengkap!',
-          html: `<p>Berikut soal yang masih belum terjawab:</p><p style="font-weight: bold; color: #f87171;">${questionNumbers}</p><p>Silakan lengkapi semua soal sebelum mengirim.</p>`,
+        if (unansweredQuestions.length > 0) {
+          const questionNumbers = unansweredQuestions.map(q => {
+            const index = this.questions.findIndex(que => que.id === q.id)
+            return `Soal ${index + 1}`
+          }).join(', ')
+          
+          Swal.fire({
+            title: 'Soal Belum Lengkap!',
+            html: `<p>Berikut soal yang masih belum terjawab:</p><p style="font-weight: bold; color: #f87171;">${questionNumbers}</p><p>Silakan lengkapi semua soal sebelum mengirim.</p>`,
+            icon: 'warning',
+            confirmButtonColor: '#ef4444',
+            background: '#1e293b',
+            color: '#f8fafc'
+          })
+          return
+        }
+      }
+      
+      this.submitting = true
+
+      if (isAuto) {
+        await Swal.fire({
+          title: 'Waktu Habis!',
+          text: 'Waktu pengerjaan telah berakhir. Jawaban Anda akan otomatis dikirim.',
           icon: 'warning',
-          confirmButtonColor: '#ef4444',
+          timer: 3000,
+          showConfirmButton: false,
           background: '#1e293b',
           color: '#f8fafc'
         })
-        return
       }
+
       
       if (!isAuto) {
         const result = await Swal.fire({
@@ -485,10 +511,12 @@ export default {
           color: '#f8fafc'
         })
 
-        if (!result.isConfirmed) return
+        if (!result.isConfirmed) {
+          this.submitting = false
+          return
+        }
       }
-      
-      this.submitting = true
+
       try {
         const token = this.$route.params.token
         await axios.post(`/api/exam/${token}/submit`, {

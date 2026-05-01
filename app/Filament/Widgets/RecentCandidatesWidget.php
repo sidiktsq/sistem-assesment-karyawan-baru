@@ -41,6 +41,10 @@ class RecentCandidatesWidget extends BaseWidget
                         'completed' => 'info',
                         'reviewed' => 'success',
                         'expired' => 'danger',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        'probation' => 'warning',
+                        'pending' => 'gray',
                     }),
                     
                 Tables\Columns\TextColumn::make('scheduled_at')

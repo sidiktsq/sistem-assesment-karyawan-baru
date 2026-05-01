@@ -126,10 +126,9 @@ class ExamController extends Controller
                 $questionData = [
                     'id' => $question->id,
                     'type' => $question->type,
-                    'question' => $question->question,
-                    'points' => $question->points,
-                    'options' => $question->options,
-                    'time_limit' => $question->time_limit
+                    'question' => $question->question_text,
+                    'points' => $question->score,
+                    'options' => $question->options
                 ];
 
                 // Don't send correct answer for multiple choice

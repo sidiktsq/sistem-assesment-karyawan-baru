@@ -34,10 +34,8 @@ class AnswerResource extends Resource
     {
         return parent::getEloquentQuery()
             ->whereIn('status', ['completed', 'reviewed'])
-            ->whereHas('answers', function ($query) {
-                $query->whereHas('question', function ($q) {
-                    $q->whereIn('type', ['essay', 'short_answer']);
-                });
+            ->whereHas('assessment.questions', function ($query) {
+                $query->whereIn('type', ['essay', 'short_answer']);
             });
     }
 

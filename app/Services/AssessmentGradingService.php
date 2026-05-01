@@ -24,7 +24,7 @@ class AssessmentGradingService
         foreach ($answers as $answer) {
             if ($answer->answer === $answer->question->correct_answer) {
                 $correctAnswers++;
-                $totalScore += $answer->question->points ?? 1;
+                $totalScore += $answer->question->score ?? 1;
             }
         }
 

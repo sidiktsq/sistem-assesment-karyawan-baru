@@ -50,7 +50,9 @@ class CandidateAssessment extends Model
 
         // Auto check expiry during retrieval
         static::retrieved(function ($candidateAssessment) {
-            if ($candidateAssessment->status === 'scheduled' && $candidateAssessment->deadline->isPast()) {
+            if ($candidateAssessment->status === 'scheduled' 
+                && $candidateAssessment->deadline 
+                && $candidateAssessment->deadline->isPast()) {
                 $candidateAssessment->update(['status' => 'expired']);
             }
         });
@@ -165,8 +167,10 @@ class CandidateAssessment extends Model
 
     public function sendResultEmail()
     {
-        if ($this->status !== 'reviewed') {
-            throw new \Exception("Assessment must be in 'reviewed' status before sending results.");
+        $finalizedStatuses = ['reviewed', 'approved', 'rejected', 'probation'];
+        
+        if (!in_array($this->status, $finalizedStatuses)) {
+            throw new \Exception("Assessment must be finalized (reviewed, approved, or rejected) before sending results.");
         }
 
         Mail::to($this->candidate->email)
