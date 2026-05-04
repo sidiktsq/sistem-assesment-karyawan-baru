@@ -451,6 +451,7 @@ export default {
           } else {
             console.log('Time expired, submitting exam')
             clearInterval(this.timer)
+            this.timeRemaining = 0 // Force to 0
             this.submitExam(true) // Auto submit without prompt
           }
         }, 1000)
@@ -460,8 +461,11 @@ export default {
     },
     
     async submitExam(isAuto = false) {
+      // Strictly check if isAuto is the boolean true (from timer)
+      const autoSubmit = isAuto === true
+
       // Check if all questions are answered - Only if NOT auto-submitting
-      if (!isAuto) {
+      if (!autoSubmit) {
         const unansweredQuestions = this.getUnansweredQuestions()
         
         if (unansweredQuestions.length > 0) {
@@ -471,8 +475,8 @@ export default {
           }).join(', ')
           
           Swal.fire({
-            title: 'Soal Belum Lengkap!',
-            html: `<p>Berikut soal yang masih belum terjawab:</p><p style="font-weight: bold; color: #f87171;">${questionNumbers}</p><p>Silakan lengkapi semua soal sebelum mengirim.</p>`,
+            title: 'Jawaban Belum Lengkap!',
+            html: `<p>Masih ada soal yang belum terjawab:</p><p style="font-weight: bold; color: #f87171;">${questionNumbers}</p><p>Harap selesaikan semua soal sebelum mengirim.</p>`,
             icon: 'warning',
             confirmButtonColor: '#ef4444',
             background: '#1e293b',
@@ -484,10 +488,13 @@ export default {
       
       this.submitting = true
 
-      if (isAuto) {
+      if (autoSubmit) {
+        // Stop timer just in case
+        if (this.timer) clearInterval(this.timer)
+        
         await Swal.fire({
           title: 'Waktu Habis!',
-          text: 'Waktu pengerjaan telah berakhir. Jawaban Anda akan otomatis dikirim.',
+          text: 'Waktu pengerjaan telah berakhir. Jawaban Anda akan otomatis dikirim dan tidak dapat diubah lagi.',
           icon: 'warning',
           timer: 3000,
           showConfirmButton: false,
@@ -496,11 +503,10 @@ export default {
         })
       }
 
-      
-      if (!isAuto) {
+      if (!autoSubmit) {
         const result = await Swal.fire({
           title: 'Selesaikan Assessment?',
-          text: "Pastikan semua soal sudah terjawab dengan benar.",
+          text: "Apakah Anda yakin dengan semua jawaban Anda? Setelah dikirim, jawaban tidak dapat diubah lagi.",
           icon: 'question',
           showCancelButton: true,
           confirmButtonColor: '#ef4444',
@@ -525,7 +531,7 @@ export default {
         
         await Swal.fire({
           title: 'Berhasil!',
-          text: 'Assessment telah dikirim.',
+          text: 'Jawaban telah terkirim.',
           icon: 'success',
           timer: 2000,
           showConfirmButton: false,
@@ -858,6 +864,12 @@ export default {
 .option-selected, .tf-selected, .personality-selected {
   border-color: #0ea5e9 !important;
   background: rgba(14, 165, 233, 0.1) !important;
+}
+
+.option-disabled, .tf-disabled, .personality-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .option-text, .tf-label, .personality-text, .option-letter {

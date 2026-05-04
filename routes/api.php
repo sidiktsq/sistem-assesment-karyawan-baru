@@ -27,7 +27,7 @@ Route::prefix('exam')->group(function () {
         }
         
         // Update status to ongoing if not already
-        if ($ca->status === 'scheduled' || $ca->status === 'completed') {
+        if ($ca->status === 'scheduled') {
             $ca->update(['status' => 'ongoing', 'started_at' => now()]);
         }
         
@@ -97,8 +97,7 @@ Route::prefix('exam')->group(function () {
                 'question_id' => $validated['question_id']
             ],
             [
-                'answer' => $validated['answer'],
-                'answered_at' => now()
+                'answer' => $validated['answer']
             ]
         );
         
@@ -127,8 +126,7 @@ Route::prefix('exam')->group(function () {
                     'question_id' => $questionId
                 ],
                 [
-                    'answer' => $answer,
-                    'answered_at' => now()
+                    'answer' => $answer
                 ]
             );
         }
@@ -158,8 +156,7 @@ Route::prefix('exam')->group(function () {
                     'question_id' => $questionId
                 ],
                 [
-                    'answer' => $answer,
-                    'answered_at' => now()
+                    'answer' => $answer
                 ]
             );
         }
@@ -180,8 +177,7 @@ Route::prefix('exam')->group(function () {
                     'question_id' => $question->id
                 ],
                 [
-                    'answer' => '',
-                    'answered_at' => now()
+                    'answer' => ''
                 ]
             );
             
