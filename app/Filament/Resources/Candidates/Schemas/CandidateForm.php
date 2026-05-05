@@ -6,6 +6,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 
 class CandidateForm
 {
@@ -18,6 +20,10 @@ class CandidateForm
                     ->icon('heroicon-o-user')
                     ->columns(2)
                     ->schema([
+                        \Filament\Forms\Components\Placeholder::make('fix_phone_input_search')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString('<style>.iti__search-input { padding-left: 35px !important; }</style>'))
+                            ->columnSpanFull(),
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255),
@@ -27,10 +33,30 @@ class CandidateForm
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        TextInput::make('phone')
+                        PhoneInput::make('phone')
                             ->label('Phone Number')
-                            ->numeric()
-                            ->maxLength(255),
+                            ->defaultCountry('ID')
+                            ->countrySearch(true)
+                            ->separateDialCode(true)
+                            ->strictMode(true)
+                            ->nationalMode(false)
+                            ->customOptions([
+                                'nationalMode' => false,
+                            ])
+                            ->containerClass('fi-phone-input-custom')
+                            ->i18n([
+                                'searchPlaceholder' => 'Cari negara...',
+                            ])
+                            ->live()
+                            ->afterStateUpdated(function ($state, $set) {
+                                if (str_starts_with($state, '0')) {
+                                    $set('phone', ltrim($state, '0'));
+                                }
+                            })
+                            ->displayNumberFormat(PhoneInputNumberType::INTERNATIONAL)
+                            ->focusNumberFormat(false)
+                            ->inputNumberFormat(PhoneInputNumberType::E164)
+                            ->validateFor(country: 'INTERNATIONAL', lenient: true),
                         TextInput::make('position_applied')
                             ->label('Position Applied For')
                             ->required()
