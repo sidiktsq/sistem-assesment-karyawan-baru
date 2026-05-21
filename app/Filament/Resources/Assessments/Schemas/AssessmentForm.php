@@ -158,7 +158,8 @@ class AssessmentForm
                                                         TextInput::make('section')
                                                             ->label('Section Name')
                                                             ->placeholder('e.g. Basics')
-                                                            ->default('general'),
+                                                            ->default('general')
+                                                            ->required(),
                                                         TextInput::make('score')
                                                             ->numeric()
                                                             ->default(1)

@@ -175,6 +175,7 @@ class SmartImportAction
                         } else {
                             // Tambah Soal Baru
                             $aiQuestion['is_active'] = $aiQuestion['is_active'] ?? true;
+                            $aiQuestion['section'] = $aiQuestion['section'] ?? 'general';
                             if ($aiOrder == 0) {
                                 $lastOrder = $currentQuestionsCollection->max('order') ?? 0;
                                 $aiQuestion['order'] = $lastOrder + count($newQuestions) + 1;
