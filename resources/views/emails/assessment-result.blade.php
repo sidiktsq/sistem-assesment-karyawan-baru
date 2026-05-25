@@ -294,7 +294,7 @@
                 </table>
             </div>
             
-            <!-- Reviewer Notes -->
+            
             @php
                 $reviewerNotes = $candidateAssessment->reviews()->latest()->first()->notes ?? null;
             @endphp
@@ -308,7 +308,7 @@
             </div>
             @endif
             
-            <!-- Contextual Feedback -->
+            
             <div class="feedback-box {{ $candidateAssessment->result === 'pass' ? 'feedback-pass' : '' }}">
                 @if($candidateAssessment->result === 'pass')
                     <strong>Selamat!</strong> Hasil Anda menunjukkan kualifikasi yang sangat baik. Kami akan segera menghubungi Anda dalam 3-5 hari kerja untuk tahapan selanjutnya.
@@ -317,7 +317,7 @@
                 @endif
             </div>
             
-            <!-- Signature -->
+            
             <div class="signature">
                 <p>Demikian informasi ini kami sampaikan. Jika ada hal yang ingin ditanyakan, silakan membalas email ini.</p>
                 <p style="margin-top: 24px;">
@@ -327,7 +327,7 @@
             </div>
         </div>
         
-        <!-- Corporate Footer -->
+        
         <div class="footer">
             <p>&copy; {{ date('Y') }} Universitas Teknologi Bandung. Seluruh Hak Cipta Dilindungi.</p>
             <p>Jl. Terusan Soekarno-Hatta No.448, Bandung, Jawa Barat.</p>
