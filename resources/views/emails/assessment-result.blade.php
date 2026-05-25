@@ -294,6 +294,20 @@
                 </table>
             </div>
             
+            <!-- Reviewer Notes -->
+            @php
+                $reviewerNotes = $candidateAssessment->reviews()->latest()->first()->notes ?? null;
+            @endphp
+            
+            @if($reviewerNotes)
+            <div class="details-wrapper" style="margin-top: 16px;">
+                <span class="section-label">Catatan Reviewer</span>
+                <div style="padding: 24px; background: #f8fafc; border-left: 4px solid #2563eb; border-radius: 0 12px 12px 0; font-size: 15px; color: #475569; line-height: 1.6;">
+                    {!! nl2br(e($reviewerNotes)) !!}
+                </div>
+            </div>
+            @endif
+            
             <!-- Contextual Feedback -->
             <div class="feedback-box {{ $candidateAssessment->result === 'pass' ? 'feedback-pass' : '' }}">
                 @if($candidateAssessment->result === 'pass')

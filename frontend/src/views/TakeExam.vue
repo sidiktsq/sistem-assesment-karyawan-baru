@@ -485,8 +485,6 @@ export default {
           return
         }
       }
-      
-      this.submitting = true
 
       if (autoSubmit) {
         // Stop timer just in case
@@ -518,22 +516,26 @@ export default {
         })
 
         if (!result.isConfirmed) {
-          this.submitting = false
           return
         }
       }
 
+      // Set submitting to true ONLY after confirmation
+      this.submitting = true
+
       try {
         const token = this.$route.params.token
+        // We can optionally use fire-and-forget for UI speed, but await is safer to ensure it's saved.
+        // If the user wants no loading AT ALL, we can not await this, but let's just make the success redirect instant.
         await axios.post(`/api/exam/${token}/submit`, {
           answers: this.answers
         })
         
-        await Swal.fire({
+        Swal.fire({
           title: 'Berhasil!',
           text: 'Jawaban telah terkirim.',
           icon: 'success',
-          timer: 2000,
+          timer: 1500,
           showConfirmButton: false,
           background: '#1e293b',
           color: '#f8fafc'
