@@ -1,4 +1,4 @@
-<template>
+  <template>
   <div class="exam-container">
     <!-- Header -->
     <header class="exam-header">
