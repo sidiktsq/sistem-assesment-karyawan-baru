@@ -1,4 +1,4 @@
-  <template>
+<template>
   <div class="exam-container">
     <!-- Header -->
     <header class="exam-header">
@@ -280,8 +280,8 @@ export default {
   },
   methods: {
     async loadQuestions() {
+      const token = this.$route.params.token
       try {
-        const token = this.$route.params.token
         const response = await axios.get(`/api/exam/${token}/questions`)
         
         console.log('API Response:', response.data)
@@ -314,7 +314,7 @@ export default {
         })
       } catch (error) {
         console.error('Error loading questions:', error)
-        this.$router.push({ name: 'result', params: { token } })
+        this.$router.push(`/exam/${token}/result`)
       } finally {
         this.loading = false
       }
@@ -463,6 +463,7 @@ export default {
     async submitExam(isAuto = false) {
       // Strictly check if isAuto is the boolean true (from timer)
       const autoSubmit = isAuto === true
+      const token = this.$route.params.token
 
       // Check if all questions are answered - Only if NOT auto-submitting
       if (!autoSubmit) {
@@ -524,7 +525,6 @@ export default {
       this.submitting = true
 
       try {
-        const token = this.$route.params.token
         // We can optionally use fire-and-forget for UI speed, but await is safer to ensure it's saved.
         // If the user wants no loading AT ALL, we can not await this, but let's just make the success redirect instant.
         await axios.post(`/api/exam/${token}/submit`, {
@@ -541,7 +541,7 @@ export default {
           color: '#f8fafc'
         })
 
-        this.$router.push({ name: 'result', params: { token } })
+        this.$router.push(`/exam/${token}/result`)
       } catch (error) {
         console.error('Error submitting exam:', error)
         Swal.fire({

@@ -109,10 +109,7 @@ export default {
     },
     
     openAssessment(assessment) {
-      this.$router.push({
-        name: 'reviewer-assessment',
-        params: { token: assessment.access_token }
-      })
+      this.$router.push(`/reviewer/${assessment.access_token}`)
     },
     
     formatDate(dateString) {

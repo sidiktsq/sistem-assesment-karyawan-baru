@@ -77,7 +77,7 @@
 import axios from 'axios'
 
 export default {
-  name: 'ReviewerAssessmentTest',
+  name: 'ReviewerAssessment',
   data() {
     return {
       loading: true,
@@ -93,22 +93,27 @@ export default {
   },
   computed: {
     hasEssayQuestions() {
-      return this.assessmentData.questions.some(q => q.type === 'essay')
+      return this.assessmentData.questions?.some(q => q.type === 'essay') || false
+    },
+    token() {
+      return this.$route.params.token
     }
+  },
+  async created() {
+    await this.loadAssessmentDetails()
   },
   methods: {
     async loadAssessmentDetails() {
       try {
         this.loading = true
-        const token = 'ebfefa53497fbdac50bca7a7f18152ba'
-        const response = await axios.get(`/api/reviewer/assessment/${token}/details`)
+        const response = await axios.get(`/api/reviewer/assessment/${this.token}/details`)
         this.assessmentData = response.data
         
-        // Initialize graded scores and feedbacks for essay questions
+        // Initialize graded scores and feedbacks for essay questions (Vue 3 friendly)
         this.assessmentData.questions.forEach(question => {
           if (question.type === 'essay') {
-            this.$set(this.gradedScores, question.id, question.current_score || 0)
-            this.$set(this.feedbacks, question.id, question.feedback || '')
+            this.gradedScores[question.id] = question.current_score || 0
+            this.feedbacks[question.id] = question.feedback || ''
           }
         })
         
@@ -125,21 +130,19 @@ export default {
     
     updateScore(questionId, value) {
       console.log('Updating score:', questionId, value)
-      this.$set(this.gradedScores, questionId, parseInt(value) || 0)
+      this.gradedScores[questionId] = parseInt(value) || 0
       console.log('Graded scores now:', this.gradedScores)
     },
     
     updateFeedback(questionId, value) {
       console.log('Updating feedback:', questionId, value)
-      this.$set(this.feedbacks, questionId, value)
+      this.feedbacks[questionId] = value
       console.log('Feedbacks now:', this.feedbacks)
     },
     
     async saveGrades() {
       try {
         this.saving = true
-        
-        const token = 'ebfefa53497fbdac50bca7a7f18152ba'
         
         // Prepare answers data for essay questions only
         const essayAnswers = this.assessmentData.questions
@@ -157,7 +160,7 @@ export default {
         
         console.log('Saving grades:', essayAnswers)
         
-        const response = await axios.post(`/api/reviewer/assessment/${token}/grade`, {
+        const response = await axios.post(`/api/reviewer/assessment/${this.token}/grade`, {
           answers: essayAnswers
         })
         
@@ -177,9 +180,7 @@ export default {
     
     forceRefresh() {
       console.log('Force refreshing assessment data...')
-      this.loading = true
       this.loadAssessmentDetails()
-      this.loading = false
     },
     
     async sendResults() {
@@ -187,9 +188,6 @@ export default {
       
       try {
         this.saving = true
-        // We'll add an API endpoint for this if it doesn't exist, 
-        // or just re-use the Filament action logic.
-        // For now, let's assume we need a new API route for this specifically for the Vue UI.
         const response = await axios.post(`/api/reviewer/assessment/${this.assessmentData.access_token}/send-results`)
         alert('Results sent successfully!')
         await this.loadAssessmentDetails()
@@ -225,6 +223,18 @@ export default {
         'result-pass': result === 'PASS',
         'result-fail': result === 'FAIL'
       }
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return 'N/A'
+      const date = new Date(dateString)
+      return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     }
   }
 }
@@ -236,6 +246,7 @@ export default {
   max-width: 1200px;
   margin: 0 auto;
   font-family: Arial, sans-serif;
+  color: #333;
 }
 
 .reviewer-test h1 {
